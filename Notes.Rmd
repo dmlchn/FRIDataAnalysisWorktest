@@ -1,0 +1,61 @@
+
+---
+title: "Notes"
+author: "Denise Melchin"
+date: "2023-01-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("Analysis.R")
+library(kableExtra)
+```
+
+
+Instructions can be found here: [data analyst work task - Google Docs](https://docs.google.com/document/d/1zO4seXRid9TdlBapb5u6pYPrgWo443BLZ763g8GqpUk/edit)
+
+# Step 1)
+
+The readme file describes the use of the three files:
+
+>RCT_questions-answers.csv: A list of all questions (aka. IFP's), their answers, and associated metadata such as dates and descriptions.
+
+>RCT_daily-forecasts.csv: For each performer forecasting method, this report provides the last forecast for each scoring day (i.e., the last forecast before 2:01pm ET).
+
+>RCT_prediction-sets.csv: A list of all individual-level forecasts (aka. Prediction sets) created in the system.
+
+I have only used the first and the last dataset for my analysis. Questions and individual-level forecasts as well as answers can be matched via question_id as well as answer_sort_order, so we can see how forecasts are resolved. I assumed membership_guid was something akin to a member ID albeit I am less confident in this now.
+
+# Step 2)
+
+Instructions mention question-day but then doesn't mention day in the break down. I therefore skipped filtering by day as it seems to somewhat contradict instructions in step 3 as we would have a time series of Brier scores.
+
+Method 3 doesn’t mention ‘by each forecaster’ unlike Method 1 and Method 2. I assumed it was intended to be included.
+
+I excluded voided questions instead focussing only on resolved and archived ones as the voided questions didn’t resolve to true or false.
+I probably should have excluded ‘prediction made after correctness was known’ but didn't.
+
+For calculating the geometric odds I pretended that probabilities of 0 and 1 (which don’t have odds) had odds of 0.01 and 99 effectively turning 100% forecasts into 99% forecasts and 0% forecasts into 1% forecasts. I also had to pretend a 0 probability was a non-zero probability for the ‘most recent’ methods.
+
+# Step 3)
+
+```{r methods, echo = FALSE}
+brier_scores %>% 
+  kbl() %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
+
+The mean over trimmed forecasts had the strongest Brier score, the others except geometric mean (which trailed behind) scored in the same ballpark. I expect this is because less experienced forecasters gave more extreme probabilities. The extreme forecasts made the geometric odds not work out well either with lots of effective 0 or 1 forecasts.
+
+# Step 4)
+
+I calculated the Brier score of extremized geometric odds as proposed in the linked EA Forum article. This had just as poor results as ordinary geometric odds. For this I didn’t filter for time but calculated the Brier score in the same way I tested the above methods.
+
+I calculated the Brier score for the top half of forecasters (of all the non-latest forecasts) on the latest forecasts on the dataset. Results were still worse than trimmed mean. 
+
+```{r top_forecaster, echo = FALSE}
+latest_forecasts_top_forecaster %>% 
+  kbl() %>% 
+  kable_classic(full_width = F, html_font = "Cambria")
+```
